@@ -1,218 +1,298 @@
-import { Box, Button, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from "@chakra-ui/react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Folder from "../components/Folder";
-import RoutineCell from "../components/RoutineCell";
-import "../RoutinesPage.css"
+import { AddIcon, DeleteIcon, EditIcon, RepeatIcon } from "@chakra-ui/icons";
+import {
+  Button,
+  Input,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalHeader,
+  ModalOverlay,
+  Text,
+} from "@chakra-ui/react";
+import { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import ConfirmDialog from "../components/ConfirmDialog";
+import EmptyState from "../components/EmptyState";
+import { useApp } from "../context/AppContext";
+import { timeAgo } from "../lib/format";
 
-// TODO: fill out the RoutinesPage
 export default function RoutinesPage() {
-
-    // TODO: change the routineLink to my routine page
-    const [routines, setRoutines] = useState([
-        { id: 1, name: "My Routines" },
-        { id: 2, name: "Routine 1", routineLink: "https://www.youtube.com/watch?v=IOl42YpK_Es" },
-        { id: 3, name: "Routine 2", routineLink: "https://www.youtube.com/watch?v=HE45jVN7XKM"  },
-        { id: 4, name: "Routine 3", routineLink: "https://www.youtube.com/watch?v=X6H4l9R3DnY" }
-      ]);
-      const [routineCounter, setRoutineCounter] = useState(routines.length);
-
-      // TODO: change the routineLink to my routine page
-    const [folders, setFolders] = useState([
-        { id: 1, name: "Hersovyac Beginner" },
-        { id: 2, name: "Stronglifts 5x5", },
-        { id: 3, name: "Home Workouts", },
-      ]);
-      const [folderCounter, setFolderCounter] = useState(folders.length);
-    
-
-      // routine handlers
-
-      const handleDelete = (id : number) => {
-        setRoutines((prevBoxes) => prevBoxes.filter((box) => box.id !== id));
-      };
-    
-      const handleDuplicate = (id : number) => {
-        const boxToDuplicate = routines.find((box) => box.id === id);
-    
-        if (!boxToDuplicate) {
-          return; // Box with the provided id not found
-        }
-    
-        const duplicatedName = `${boxToDuplicate.name} (Copy)`;
-
-        const duplicatedBox = { id: routineCounter + 1, name: duplicatedName, routineLink: boxToDuplicate.routineLink };
-    
-        setRoutines((prevBoxes) => [...prevBoxes, duplicatedBox]);
-        setRoutineCounter((prevCounter) => prevCounter + 1);
-      };
-    
-      const handleNameChange = (id : number, newName : string) => {
-        setRoutines((prevBoxes) => {
-          return prevBoxes.map((box) => {
-            if (box.id === id) {
-              return { ...box, name: newName };
-            }
-            return box;
-          });
-        });
-      };
-
-      // TODO: set up handler functions correctly
-      // folder handlers
-      const handleAddRoutineToFolder = (folderId : number) => {
-        // Go to Create Routine page
-        // TODO: generate id for this new routine
-        navigate("/create-routine");
-
-        // If I click the "Save Routine" button on the "Create Routine" page,
-        // add a RoutineCell that links to the newly created routine under the folder
-        // with my given id
-        
-      }
-
-    //   const handleRenameFolder = (id : number, newName : string) => {
-    //     setFolders((prevBoxes) => {
-    //         return prevBoxes.map((box) => {
-    //           if (box.id === id) {
-    //             return { ...box, name: newName };
-    //           }
-    //           return box;
-    //         });
-    //       });
-    //   }
-
-    const handleDeleteFolder = (folderId : number) => {
-        // console.log("BEFORE RESETTING FOLDERS");
-        // console.log(`folders: ${folders.map((folder) => (folder.id))}`);
-        // console.log(`folders.id ${folderId}`);
-
-        setFolders(folders => folders.filter(folder => folder.id !== folderId));
-        // console.log(`folders: ${folders}`);
-        // console.log("AFTER RESETTING FOLDERS");
-      };
-
-    
-    // new folder pieces
-
-  const [isAddFolderModalOpen, setIsAddFolderModalOpen] = useState(false);
-  const [newFolderName, setNewFolderName] = useState('');
-
-  const handleAddFolderClick = () => {
-    setIsAddFolderModalOpen(true);
-  };
-
-  const handleAddFolderCancel = () => {
-    setIsAddFolderModalOpen(false);
-    setNewFolderName('');
-  };
-
-  const handleAddFolderSubmit = () => {
-    // Validate if the new folder name is not empty
-    if (newFolderName.trim() !== '') {
-      // Generate a unique ID for the new folder
-      const newFolderId = Date.now();
-
-      // Create a new folder object
-      const newFolder = {
-        id: newFolderId,
-        name: newFolderName
-      };
-
-      // Update the folders state with the new folder
-      setFolders(folders => [...folders, newFolder]);
-      // console.log(folders.map( (folder)=>folder.name ));
-
-      // Reset the new folder name and close the modal
-      setNewFolderName('');
-      setIsAddFolderModalOpen(false);
-    }
-  };
-
+  const {
+    routines,
+    folders,
+    activeWorkout,
+    deleteRoutine,
+    duplicateRoutine,
+    moveRoutine,
+    createFolder,
+    renameFolder,
+    deleteFolder,
+    startWorkoutFromRoutine,
+    discardWorkout,
+  } = useApp();
   const navigate = useNavigate();
 
-  const handleNewRoutine = () => {
-    // redirect to the create-routine page
-    navigate("/create-routine");
-    
-  }
-    
-      return (
+  const [activeFolder, setActiveFolder] = useState<string>("all");
+  const [manageOpen, setManageOpen] = useState(false);
+  const [newFolder, setNewFolder] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [pendingStart, setPendingStart] = useState<string | null>(null);
 
-        
-        <Box className="routines-screen-container">
+  const visible = useMemo(() => {
+    if (activeFolder === "all") return routines;
+    if (activeFolder === "none") return routines.filter((routine) => !routine.folderId);
+    return routines.filter((routine) => routine.folderId === activeFolder);
+  }, [activeFolder, routines]);
 
-          <Box className="box-container" width={"60vw"}>
+  const folderName = (id: string | null) =>
+    id ? folders.find((folder) => folder.id === id)?.name ?? null : null;
 
+  const handleStart = (id: string) => {
+    if (activeWorkout) {
+      setPendingStart(id);
+      return;
+    }
+    startWorkoutFromRoutine(id);
+    navigate("/workout");
+  };
 
-            <Box className="routines-overview-screen-left-container">
-              <p className="section-header">My Routines</p>
-              <Button fontWeight={"semiBold"} onClick={handleNewRoutine} > New Routine </Button>
-              <Button fontWeight={"semiBold"} onClick={handleAddFolderClick} > New Folder </Button>
+  return (
+    <div className="page">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Routines</h1>
+          <p className="page-subtitle">
+            {routines.length} routine{routines.length === 1 ? "" : "s"} · {folders.length} folder
+            {folders.length === 1 ? "" : "s"}
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Button size="sm" variant="ghost" onClick={() => setManageOpen(true)}>
+            Folders
+          </Button>
+          <Button size="sm" as={Link} to="/routines/new" leftIcon={<AddIcon boxSize="10px" />}>
+            New routine
+          </Button>
+        </div>
+      </div>
 
-              <Modal isOpen={isAddFolderModalOpen} onClose={handleAddFolderCancel}>
-                <ModalOverlay />
-                <ModalContent>
-                  <ModalHeader>Add Folder</ModalHeader>
-                  <ModalCloseButton />
-                  <ModalBody>
-                    <Input
-                      value={newFolderName}
-                      onChange={event => setNewFolderName(event.target.value)}
-                      placeholder="Enter folder name"
-                    />
-                  </ModalBody>
-                  <ModalFooter>
-                    <Button colorScheme="blue" mr={3} onClick={handleAddFolderSubmit}>Save</Button>
-                    <Button onClick={handleAddFolderCancel}>Cancel</Button>
-                  </ModalFooter>
-                </ModalContent>
-              </Modal>
+      <div className="filter-bar" style={{ marginBottom: 16 }}>
+        <Button
+          size="xs"
+          variant={activeFolder === "all" ? "solid" : "ghost"}
+          onClick={() => setActiveFolder("all")}
+        >
+          All
+        </Button>
+        {folders.map((folder) => (
+          <Button
+            key={folder.id}
+            size="xs"
+            variant={activeFolder === folder.id ? "solid" : "ghost"}
+            onClick={() => setActiveFolder(folder.id)}
+          >
+            {folder.name}
+          </Button>
+        ))}
+        <Button
+          size="xs"
+          variant={activeFolder === "none" ? "solid" : "ghost"}
+          onClick={() => setActiveFolder("none")}
+        >
+          Unfiled
+        </Button>
+      </div>
 
-            </Box>
+      {visible.length === 0 ? (
+        <div className="card">
+          <EmptyState
+            title="No routines here yet"
+            description="Routines let you start a planned workout in one tap, with target sets and rep ranges."
+            action={
+              <Button size="sm" as={Link} to="/routines/new">
+                Create your first routine
+              </Button>
+            }
+          />
+        </div>
+      ) : (
+        <div className="grid-cards">
+          {visible.map((routine) => (
+            <div className="card card-pad card-hover" key={routine.id}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                <Link to={`/routines/${routine.id}`} style={{ flex: 1, minWidth: 0 }}>
+                  <div className="strong truncate" style={{ fontSize: 16 }}>
+                    {routine.name}
+                  </div>
+                  <div className="small muted" style={{ marginTop: 3 }}>
+                    {routine.exercises.length} exercises · updated {timeAgo(routine.updatedAt)}
+                  </div>
+                </Link>
 
-            <Box className="routines-overview-screen-right-container" borderRadius='lg' border="1px" w="60%" borderColor='gray.300' >
-                
-                <Box>
-                    {
-                        folders.map((folder) => (
-                            <Folder 
-                                key={folder.id}
-                                id={folder.id}
-                                name={folder.name}
-                                onAddRoutine={handleAddRoutineToFolder} 
-                                onDeleteFolder={handleDeleteFolder}>
-                            </Folder>
-                        ))
-                    }
-                </Box>
-                
-                
+                <Menu placement="bottom-end">
+                  <MenuButton
+                    as={Button}
+                    size="xs"
+                    variant="ghost"
+                    aria-label={`${routine.name} options`}
+                  >
+                    ···
+                  </MenuButton>
+                  <MenuList fontSize="sm">
+                    <MenuItem icon={<RepeatIcon />} onClick={() => handleStart(routine.id)}>
+                      Start workout
+                    </MenuItem>
+                    <MenuItem
+                      icon={<EditIcon />}
+                      as={Link}
+                      to={`/routines/${routine.id}/edit`}
+                    >
+                      Edit routine
+                    </MenuItem>
+                    <MenuItem onClick={() => duplicateRoutine(routine.id)}>Duplicate</MenuItem>
+                    <MenuItem onClick={() => moveRoutine(routine.id, null)}>
+                      Move to unfiled
+                    </MenuItem>
+                    {folders.map((folder) => (
+                      <MenuItem
+                        key={folder.id}
+                        onClick={() => moveRoutine(routine.id, folder.id)}
+                        isDisabled={routine.folderId === folder.id}
+                      >
+                        Move to “{folder.name}”
+                      </MenuItem>
+                    ))}
+                    <MenuItem
+                      icon={<DeleteIcon />}
+                      color="red.300"
+                      onClick={() => setPendingDelete(routine.id)}
+                    >
+                      Delete
+                    </MenuItem>
+                  </MenuList>
+                </Menu>
+              </div>
 
-                <Box className="my-routines">
-                    <h1>My Routines ({routines.length})</h1>
-                    
-                    <div className="my-routines-container">
-                        {routines.map((box) => (
-                            <RoutineCell
-                                key={box.id}
-                                index={box.id}
-                                name={box.name}
-                                routineLink={box.routineLink}
-                                onDelete={handleDelete}
-                                onDuplicate={handleDuplicate}
-                                onNameChange={handleNameChange}
-                            />
-                        ))}
-                    </div>
-                </Box>
-                
-            </Box>
+              {routine.notes ? (
+                <Text className="small muted" mt={2} noOfLines={2}>
+                  {routine.notes}
+                </Text>
+              ) : null}
 
-          </Box>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 12 }}>
+                <span className="chip">{routine.exercises.length} exercises</span>
+                {folderName(routine.folderId) ? (
+                  <span className="chip chip-accent">{folderName(routine.folderId)}</span>
+                ) : null}
+              </div>
 
-        
-        </Box>
+              <Button
+                size="sm"
+                width="100%"
+                mt={3}
+                variant="outline"
+                leftIcon={<RepeatIcon />}
+                onClick={() => handleStart(routine.id)}
+              >
+                Start workout
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
 
-      );
+      <Modal isOpen={manageOpen} onClose={() => setManageOpen(false)} size="md" isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Folders</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            {folders.length === 0 ? (
+              <Text className="small muted" mb={3}>
+                Folders keep your routines organised by programme or training block.
+              </Text>
+            ) : (
+              folders.map((folder) => (
+                <div key={folder.id} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                  <Input
+                    size="sm"
+                    defaultValue={folder.name}
+                    onBlur={(event) => renameFolder(folder.id, event.target.value)}
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    color="red.300"
+                    onClick={() => deleteFolder(folder.id)}
+                  >
+                    <DeleteIcon />
+                  </Button>
+                </div>
+              ))
+            )}
+
+            <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+              <Input
+                size="sm"
+                placeholder="New folder name"
+                value={newFolder}
+                onChange={(event) => setNewFolder(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && newFolder.trim()) {
+                    createFolder(newFolder);
+                    setNewFolder("");
+                  }
+                }}
+              />
+              <Button
+                size="sm"
+                isDisabled={!newFolder.trim()}
+                onClick={() => {
+                  createFolder(newFolder);
+                  setNewFolder("");
+                }}
+              >
+                Add
+              </Button>
+            </div>
+            <Text className="small muted" mt={2}>
+              Renaming saves when you click outside the field.
+            </Text>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={pendingDelete !== null}
+        title="Delete this routine?"
+        body="The routine will be removed. Workouts already logged from it stay in your history."
+        confirmLabel="Delete"
+        danger
+        onConfirm={() => {
+          if (pendingDelete) deleteRoutine(pendingDelete);
+        }}
+        onClose={() => setPendingDelete(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={pendingStart !== null}
+        title="A workout is already in progress"
+        body="Starting this routine will discard the workout you are currently logging."
+        confirmLabel="Discard and start"
+        danger
+        onConfirm={() => {
+          if (!pendingStart) return;
+          discardWorkout();
+          startWorkoutFromRoutine(pendingStart);
+          navigate("/workout");
+        }}
+        onClose={() => setPendingStart(null)}
+      />
+    </div>
+  );
 }

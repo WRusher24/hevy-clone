@@ -1,9 +1,7 @@
 [
-    {"key": 1, "pageName": "/", "displayName": "Feed"},
-    {"key": 2, "pageName": "/routines", "displayName": "Routines"},
-    {"key": 3, "pageName": "/exercises", "displayName": "Exercises"},
-    {"key": 4, "pageName": "/profile", "displayName": "Profile"},
-    {"key": 5, "pageName": "/settings", "displayName": "Settings"},
-    {"key": 6, "pageName": "/log", "displayName": "Log"},
-    {"key": 7, "pageName": "/sandbox", "displayName": "Sandbox"}
+  { "key": 1, "pageName": "/", "displayName": "Feed" },
+  { "key": 2, "pageName": "/routines", "displayName": "Routines" },
+  { "key": 3, "pageName": "/exercises", "displayName": "Exercises" },
+  { "key": 4, "pageName": "/history", "displayName": "History" },
+  { "key": 5, "pageName": "/profile", "displayName": "Profile" }
 ]

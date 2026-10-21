@@ -1,7 +1,11 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "hevy-clone",
+  "version": "1.0.0",
   "private": true,
+  "description": "A Hevy-style workout tracker built with React, TypeScript and Chakra UI.",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "@chakra-ui/icons": "^2.0.19",
     "@chakra-ui/react": "^2.6.0",
@@ -16,8 +20,6 @@
     "@types/react-dom": "^18.2.1",
     "framer-motion": "^10.12.4",
     "react": "^18.2.0",
-    "react-dnd": "^16.0.1",
-    "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.11.0",
     "react-scripts": "5.0.1",
@@ -28,6 +30,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "typecheck": "tsc --noEmit",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

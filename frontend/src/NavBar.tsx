@@ -1,34 +1,60 @@
-import {NavLink} from "react-router-dom";
-import "./NavBar.css"
-import { nanoid } from 'nanoid';
+import { Button } from "@chakra-ui/react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import Pages from "./Pages.json";
+import { useApp } from "./context/AppContext";
+import { config } from "./config";
+import "./styles/app.css";
 
-export type NavButtonPair = { pageName: string; displayName: string; };
-export type Pages = { pages : NavButtonPair[] };
-
-function Button( {pageName, displayName} : NavButtonPair) {
-  return (
-    <div className="navButton">
-        <NavLink to={pageName} >{displayName}</NavLink>
-    </div>
-  );
+export interface NavItem {
+  key: number;
+  pageName: string;
+  displayName: string;
 }
 
-// TODO: if I have issues, it may be the `any` type
-function NavBar( {pages} : any) {
-  const buttons : any = [];
-  pages.forEach( (pg : any) => {
-    buttons.push(
-      <Button key={nanoid()} pageName={pg.pageName} displayName={pg.displayName} />
-    );
-  });
+const NAV_ITEMS = Pages as NavItem[];
+
+export default function NavBar() {
+  const { activeWorkout, startEmptyWorkout } = useApp();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleStart = () => {
+    if (!activeWorkout) startEmptyWorkout();
+    navigate("/workout");
+  };
 
   return (
-    <nav className="navBar">
-       
-          {buttons}
-        
-    </nav>
+    <header className="topbar">
+      <div className="topbar-inner">
+        <NavLink to="/" className="brand" aria-label={`${config.appName} home`}>
+          <span className="brand-mark">HC</span>
+          <span className="brand-name">{config.appName}</span>
+        </NavLink>
+
+        <nav className="nav-links" aria-label="Main navigation">
+          {NAV_ITEMS.map((item) => {
+            const isActive =
+              item.pageName === "/"
+                ? location.pathname === "/"
+                : location.pathname.startsWith(item.pageName);
+            return (
+              <NavLink
+                key={item.key}
+                to={item.pageName}
+                className={`nav-link${isActive ? " is-active" : ""}`}
+              >
+                {item.displayName}
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        <span className="nav-spacer" />
+
+        <Button size="sm" onClick={handleStart} flexShrink={0}>
+          {activeWorkout ? "Resume Workout" : "Start Workout"}
+        </Button>
+      </div>
+    </header>
   );
 }
-
-export default NavBar;
